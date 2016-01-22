@@ -16,14 +16,14 @@ namespace ai_proj_cs
         {
             InitializeComponent();
             currentState = new GameState();
-            gridTextBoxes = new System.Windows.Forms.PictureBox[puzzleSize, puzzleSize];
+            gridTextBoxes = new System.Windows.Forms.PictureBox[GameState.puzzleSize, GameState.puzzleSize];
         }
         public System.Windows.Forms.PictureBox[,] gridTextBoxes;
-        public int empty = 0;
-        public int possible = 1;
-        public int black = 2;
-        public int white = 3;
-        static public int puzzleSize = 8;
+//        public static int empty = 0;
+//        public static int possible = 1;
+//        public static int black = 2;
+//        public static int white = 3;
+//        public static int puzzleSize = 8;
 
         public void Form1_Load(object sender, EventArgs e)
         {
@@ -39,9 +39,9 @@ namespace ai_proj_cs
             int sy = 24;
             int tabInd = 0;
             //System.Windows.Forms.PictureBox[,] gridTextBoxes = new System.Windows.Forms.PictureBox[puzzleSize, puzzleSize];
-            for (int i = 0; i < puzzleSize; i++)
+            for (int i = 0; i < GameState.puzzleSize; i++)
             {
-                for (int j = 0; j < puzzleSize; j++)
+                for (int j = 0; j < GameState.puzzleSize; j++)
                 {
                     gridTextBoxes[i, j] = new System.Windows.Forms.PictureBox();
                     gridTextBoxes[i, j].Name = Convert.ToString(i) + "_" + Convert.ToString(j);
@@ -70,8 +70,8 @@ namespace ai_proj_cs
         {
             currentState.calculatePossibleMoves();
             int[,] retdata = currentState.getData();
-            for (int i = 0; i < puzzleSize; i++)
-                for (int j = 0; j < puzzleSize; j++)
+            for (int i = 0; i < GameState.puzzleSize; i++)
+                for (int j = 0; j < GameState.puzzleSize; j++)
                     gridTextBoxes[i, j].BackColor = currentState.data[i, j].getColor();
         }
 
@@ -81,7 +81,7 @@ namespace ai_proj_cs
             int ci = -1;
             int cj = -1;
             int temp;
-            int[,] retdata;
+            //int[,] retdata;
             string[] retstring1;
             string[] retstring2;
             retstring1 = currentState.getDataStr();
@@ -100,8 +100,8 @@ namespace ai_proj_cs
                 //make random move
                 while (true)
                 {
-                    ci = rnd.Next(0, puzzleSize - 1);
-                    cj = rnd.Next(0, puzzleSize - 1);
+                    ci = rnd.Next(0, GameState.puzzleSize - 1);
+                    cj = rnd.Next(0, GameState.puzzleSize - 1);
                     if (currentState.data[ci, cj].isPossible())
                         break;
                 }
@@ -118,9 +118,10 @@ namespace ai_proj_cs
 
     public class GameState
     {
+        public static int puzzleSize = 8;
         public int[,] getData()
         {
-            int puzzleSize = ai_proj_cs.Form1.puzzleSize;
+            int puzzleSize = GameState.puzzleSize;
             int[,] retdata = new int[puzzleSize, puzzleSize];
             for (int i = 0; i < puzzleSize; i++)
                 for (int j = 0; j < puzzleSize; j++)
@@ -129,7 +130,7 @@ namespace ai_proj_cs
         }
         public string[] getDataStr()
         {
-            int puzzleSize = ai_proj_cs.Form1.puzzleSize;
+            int puzzleSize = GameState.puzzleSize;
             string[] retstring = new string[puzzleSize];
             for (int i = 0; i < puzzleSize; i++)
                 retstring[i] = "";
@@ -140,14 +141,14 @@ namespace ai_proj_cs
         }
         public GameState(Piece[,] data)
         {
-            int puzzleSize = ai_proj_cs.Form1.puzzleSize;
+            int puzzleSize = GameState.puzzleSize;
             for (int i = 0; i < puzzleSize; i++)
                 for (int j = 0; j < puzzleSize; j++)
                     data[i, j].setEmpty();
         }
         public GameState()
         {
-            int puzzleSize = ai_proj_cs.Form1.puzzleSize;
+            int puzzleSize = GameState.puzzleSize;
             data = new Piece[puzzleSize, puzzleSize];
             for (int i = 0; i < puzzleSize; i++)
                 for (int j = 0; j < puzzleSize; j++)
@@ -173,7 +174,7 @@ namespace ai_proj_cs
         }
         public bool isPotentialCell(int x, int y)
         {
-            int puzzleSize = ai_proj_cs.Form1.puzzleSize;
+            int puzzleSize = GameState.puzzleSize;
             // isolated_cell: kendisi bos olan ve en az bir komsusu dolu olan hucre.
             if (data[x, y].isOccupied())
                 return false;
@@ -193,7 +194,7 @@ namespace ai_proj_cs
         }
         public bool checkInd(int i, int j)
         {
-            int puzzleSize = ai_proj_cs.Form1.puzzleSize;
+            int puzzleSize = GameState.puzzleSize;
             if ((i < 0) || (i >= puzzleSize) || (j < 0) || (j >= puzzleSize))
                 return false;
             else
@@ -230,7 +231,7 @@ namespace ai_proj_cs
         {
             int ci = -1;
             int cj = -1;
-            int puzzleSize = ai_proj_cs.Form1.puzzleSize;
+            int puzzleSize = GameState.puzzleSize;
             for (int i = 0; i < puzzleSize; i++)
             {
                 for (int j = 0; j < puzzleSize; j++)
@@ -282,7 +283,7 @@ namespace ai_proj_cs
             int ci;
             int cj;
             int c;
-            int puzzleSize = ai_proj_cs.Form1.puzzleSize;
+            int puzzleSize = GameState.puzzleSize;
             if (!checkInd(x, y))
                 return -1;
             if (!data[x, y].isPossible())
@@ -381,10 +382,10 @@ namespace ai_proj_cs
             return false;
         }
         public int val;
-        private int white = 3;
-        private int black = 2;
-        private int empty = 0;
-        private int possible = 1;
+        public static int white = 3;
+        public static int black = 2;
+        public static int empty = 0;
+        public static int possible = 1;
         public Color getColor()
         {
             if (isBlack())
