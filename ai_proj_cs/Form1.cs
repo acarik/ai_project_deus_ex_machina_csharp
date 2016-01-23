@@ -18,6 +18,7 @@ namespace ai_proj_cs
             currentState = new GameState();
             gridTextBoxes = new System.Windows.Forms.PictureBox[GameState.puzzleSize, GameState.puzzleSize];
         }
+        public int nodeCounter = 0;
         public System.Windows.Forms.PictureBox[,] gridTextBoxes;
 //        public static int empty = 0;
 //        public static int possible = 1;
@@ -97,18 +98,25 @@ namespace ai_proj_cs
             }
             else
             {
-                //make random move
-                while (true)
+                if (GameState.randomStrategy)
+                    //make random move
+                    while (true)
+                    {
+                        ci = rnd.Next(0, GameState.puzzleSize - 1);
+                        cj = rnd.Next(0, GameState.puzzleSize - 1);
+                        if (currentState.data[ci, cj].isPossible())
+                            break;
+                    }
+                else
                 {
-                    ci = rnd.Next(0, GameState.puzzleSize - 1);
-                    cj = rnd.Next(0, GameState.puzzleSize - 1);
-                    if (currentState.data[ci, cj].isPossible())
-                        break;
+                    // contruct game tree
+                    GameState root = GameState.ConstructGameTree(currentState);
                 }
 
             }
             if (currentState.makeMove(ci, cj) == -1)
                 return;
+            // update turn number
             currentState.nextMove();
             this.updateBoard();
             retstring2 = currentState.getDataStr();
@@ -118,6 +126,91 @@ namespace ai_proj_cs
 
     public class GameState
     {
+        public int util = -1;
+        public int getUtilVal()
+        {
+            return -1;
+        }
+        public static int nodeCounter = 0;
+        public static int maxNumChildren = 64;
+        public static GameState ConstructGameTree(GameState rootState)
+        {
+            ConstructGameTreeRecursive(rootState, 0);
+            return rootState;
+        }
+        public static void ConstructGameTreeRecursive(GameState node, int currDepth)
+        {
+            int temp = 0;
+            if (currDepth >= maxDepth)
+                return;
+            int[] c;
+            int[] possibleMoveInd;
+            //GameState next = new GameState();
+            //GameState next = (GameState)node.MemberwiseClone();
+            possibleMoveInd = node.getPossibleMoves();
+            GameState[] next = new GameState[possibleMoveInd.Length];
+            for (int i = 0; i < possibleMoveInd.Length; i++)
+            {
+                next[i] = node.cloneTurnAndData();
+                c = ind2sub(possibleMoveInd[i]);
+                if (next[i].makeMove(c[0], c[1]) == -1)
+                    temp = 1;
+                next[i].nextMove();
+                next[i].name = Convert.ToString(GameState.nodeCounter++);
+                ConstructGameTreeRecursive(next[i], currDepth + 1);
+                node.addChild(next[i]);
+            }
+        }
+        public GameState cloneTurnAndData()
+        {
+            GameState y = new GameState();
+            // set data
+            for (int i = 0; i < puzzleSize; i++)
+                for (int j = 0; j < puzzleSize; j++)
+                    y.data[i, j].val = this.data[i, j].val;
+            y.turn = this.turn;
+            return y;
+
+        }
+        public void setData(Piece[,] data_)
+        {
+            for (int i = 0; i < puzzleSize; i++)
+                for (int j = 0; j < puzzleSize; j++)
+                    data[i, j].val = data_[i, j].val;
+        }
+        public static bool randomStrategy = false;
+        public static int maxDepth = 3;
+        public void addChild(GameState node_)
+        {
+            node_.parent = this;
+            children[numChildren] = node_;
+            numChildren++;
+        }
+        public static int[] ind2sub(int m)
+        {
+            int[] i = new int[2];
+            i[0] = m / puzzleSize;
+            i[1] = m % puzzleSize;
+            return i;
+        }
+        public static int sub2ind(int i, int j)
+        {
+            return i * puzzleSize + j;
+        }
+        public int[] getPossibleMoves()
+        {
+            int[] possInd;
+            this.calculatePossibleMoves();
+            List<int> possIndList = new List<int>();
+            for (int i = 0; i < puzzleSize; i++)
+                for (int j = 0; j < puzzleSize; j++)
+                    if (data[i, j].isPossible())
+                        possIndList.Add(sub2ind(i, j));
+            possInd = possIndList.ToArray();
+            return possInd;
+        }
+        public int numChildren = 0;
+        public string name;
         public static int puzzleSize = 8;
         public int[,] getData()
         {
@@ -139,12 +232,24 @@ namespace ai_proj_cs
                     retstring[i] = retstring[i] + Convert.ToString(data[i, j].val);
             return retstring;
         }
-        public GameState(Piece[,] data)
+        public GameState parent;
+        public GameState[] children;
+        public GameState(GameState currGs, GameState parent_)
         {
-            int puzzleSize = GameState.puzzleSize;
+            Piece[,] data = new Piece[puzzleSize, puzzleSize];
             for (int i = 0; i < puzzleSize; i++)
                 for (int j = 0; j < puzzleSize; j++)
-                    data[i, j].setEmpty();
+                    data[i, j] = new Piece(currGs.data[i, j].val);
+            this.parent = parent_;
+            this.children = new GameState[maxNumChildren];
+        }
+        public GameState(Piece[,] data_)
+        {
+            data = new Piece[puzzleSize, puzzleSize];
+            for (int i = 0; i < puzzleSize; i++)
+                for (int j = 0; j < puzzleSize; j++)
+                    data[i, j] = new Piece(data_[i, j].val);
+            this.children = new GameState[maxNumChildren];
         }
         public GameState()
         {
@@ -157,6 +262,7 @@ namespace ai_proj_cs
             data[4, 4].setWhite();
             data[3, 4].setBlack();
             data[4, 3].setBlack();
+            this.children = new GameState[maxNumChildren];
         }
         public Piece[,] data;
         public int turn = 0;
@@ -231,7 +337,6 @@ namespace ai_proj_cs
         {
             int ci = -1;
             int cj = -1;
-            int puzzleSize = GameState.puzzleSize;
             for (int i = 0; i < puzzleSize; i++)
             {
                 for (int j = 0; j < puzzleSize; j++)
@@ -283,7 +388,7 @@ namespace ai_proj_cs
             int ci;
             int cj;
             int c;
-            int puzzleSize = GameState.puzzleSize;
+            this.calculatePossibleMoves();
             if (!checkInd(x, y))
                 return -1;
             if (!data[x, y].isPossible())
@@ -337,6 +442,10 @@ namespace ai_proj_cs
 
     public class Piece
     {
+        public Piece(int val_)
+        {
+            val = val_;
+        }
         public Piece()
         {
             val = empty;
