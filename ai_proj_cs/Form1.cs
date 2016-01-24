@@ -28,6 +28,9 @@ namespace ai_proj_cs
 
         public void Form1_Load(object sender, EventArgs e)
         {
+            if (GameState.logger)
+                if (System.IO.File.Exists(@"D:\data.txt"))
+                    System.IO.File.Delete(@"D:\data.txt");
             // and construct the grid
             int x0 = 13;
             int y0 = 50;
@@ -81,6 +84,7 @@ namespace ai_proj_cs
             Random rnd = new Random();
             int ci = -1;
             int cj = -1;
+            int[] c = {-1, -1};
             int temp;
             //int[,] retdata;
             string[] retstring1;
@@ -110,7 +114,12 @@ namespace ai_proj_cs
                 else
                 {
                     // contruct game tree
-                    GameState root = GameState.ConstructGameTree(currentState);
+                    currentState.dumpData(0);
+                    currentState.ConstructGameTree();
+                    c = currentState.findBestMove();
+                    ci = c[0];
+                    cj = c[1];
+                    currentState.numChildren = 0;
                 }
 
             }
@@ -126,21 +135,202 @@ namespace ai_proj_cs
 
     public class GameState
     {
-        public int util = -1;
+        public void dumpData(int currDepth)
+        {
+            if (GameState.logger)
+            {
+                string[] lines = new string[puzzleSize];
+                string s;
+                if (isComputersTurn())
+                    s = "comp/white/" + Convert.ToString(Piece.white) + " moves";
+                else
+                    s = "user/black/" + Convert.ToString(Piece.black) + " moves";
+                for (int i = 0; i < puzzleSize; i++)
+                {
+                    for (int j = 0; j < puzzleSize; j++)
+                        if (data[i, j].isOccupied())
+                            lines[i] += Convert.ToString(data[i, j].val);
+                        else
+                            lines[i] += "0";
+                }
+                using (System.IO.StreamWriter file =
+                new System.IO.StreamWriter(@"D:\data.txt", true))
+                {
+                    if (this.parent == null)
+                        file.WriteLine("curr:" + this.name + " at depth " + Convert.ToString(currDepth) + ", " + s + ", parent:" + "null" + ", util:" + Convert.ToString(this.getUtilVal()));
+                    else
+                        file.WriteLine("curr:" + this.name + " at depth " + Convert.ToString(currDepth) + ", " + s + ", parent:" + this.parent.name + ", util:" + Convert.ToString(this.getUtilVal()));
+                    for (int i = 0; i < puzzleSize; i++)
+                    {
+                        file.WriteLine(lines[i]);
+                    }
+                }
+            }
+        }
+        public void dumpTree()
+        {
+            if (GameState.logger)
+            {
+                this.dumpTreeRecursive();
+            }
+        }
+        public void dumpTreeRecursive()
+        {
+            GameState curr = this;
+            GameState r;
+            string s;
+            string s1;
+            for (int i = 0; i < 250; i++)
+            {
+                s = "";
+                if (curr == null)
+                    break;
+                for (int j = 0; j < curr.numChildren; j++)
+                {
+                    r = curr.children[j];
+                    if (r.isComputersTurn())
+                        s1 = "M";
+                    else
+                        s1 = "m";
+                    s += "(" + r + r.name + ",";
+                }
+            }
+        }
+        public int[] findBestMove()
+        {
+            int[] s = new int[]{0,0};
+            int ind = -1;
+            int maxVal = -5000;
+            for (int i = 0; i<this.numChildren; i++)
+                if (this.children[i].getUtilVal() > maxVal)
+                {
+                    ind = i;
+                    maxVal = this.children[i].getUtilVal();
+                }
+            // ind sirali cocuga gelmek icin ypailmasi gereken hamleyi bul
+            for(int i=0;i<puzzleSize;i++)
+                for(int j=0;j<puzzleSize;j++)
+                    if (this.children[ind].data[i,j].isOccupied())
+                        if (!this.data[i, j].isOccupied())
+                        {
+                            s[0] = i;
+                            s[1] = j;
+                        }
+            return s;
+        }
+        public int getVal()
+        {
+            int retVal;
+            if (this.numChildren == 0)
+                retVal = this.getUtilVal();
+            else
+            {
+                retVal = this.children[0].getUtilVal();
+                for (int i = 1; i < this.numChildren; i++)
+                    if (this.isComputersTurn())
+                    {
+                        // max
+                        if (this.children[i].getVal() > retVal)
+                            retVal = this.children[i].getVal();
+                    }
+                    else
+                    {
+                        // min
+                        if (this.children[i].getVal() < retVal)
+                            retVal = this.children[i].getVal();
+                    }
+            }
+            return retVal;
+        }
+        
+        public static int[,] squareWeight = {{100,-25,10,5,5,10,-25,100},
+											 {25 ,25 ,2 ,2,2,2 ,25 ,25},
+											 {10 ,2  ,5 ,1,1,5 ,2  ,10},
+											 {5  ,2  ,1 ,2,2,1 ,2  ,5},
+											 {5  ,2  ,1 ,2,2,1 ,2  ,5},
+											 {10 ,2  ,5 ,1,1,5 ,2  ,10},
+											 {25 ,25 ,2 ,2,2,2 ,25 ,25},
+											 {100,-25,10,5,5,10,-25,100},};
+        /*
+        public static int[,] squareWeight = {{100,25,10,5,5,10, 25,100},
+											 {25 ,25 ,2 ,2,2,2 ,25 ,25},
+											 {10 ,2  ,5 ,1,1,5 ,2  ,10},
+											 {5  ,2  ,1 ,2,2,1 ,2  ,5},
+											 {5  ,2  ,1 ,2,2,1 ,2  ,5},
+											 {10 ,2  ,5 ,1,1,5 ,2  ,10},
+											 {25 ,25 ,2 ,2,2,2 ,25 ,25},
+											 {100,25,10,5,5,10 ,25 ,100},};
+        */
+        public bool utilValValid = false;
+        public int utilVal = 0;
         public int getUtilVal()
         {
-            return -1;
+            if (!utilValValid)
+            {
+                int sWeight = 0;
+                int tileDiff = 0, tileDiffW = 0, tileDiffB = 0;
+                int mobilityDiff = 0, mobilityW = 0, mobilityB = 0;
+                int coeffSquareWeight = 100;
+                int coeffMaxTile, coeffMaxMobility;
+                //evaluate square weight component
+                if (isComputersTurn())
+                {
+                    for (int i = 0; i < puzzleSize; i++)
+                        for (int j = 0; j < puzzleSize; j++)
+                            if (data[i, j].isWhite())
+                                sWeight = sWeight + squareWeight[i, j];
+                }
+                else
+                {
+                    for (int i = 0; i < puzzleSize; i++)
+                        for (int j = 0; j < puzzleSize; j++)
+                            if (data[i, j].isBlack())
+                                sWeight = sWeight + squareWeight[i, j];
+                }
+                //evaluate maximize tiles component
+                for (int i = 0; i < puzzleSize; i++)
+                    for (int j = 0; j < puzzleSize; j++)
+                        if (data[i, j].isWhite())
+                            tileDiffW++;
+                        else
+                            tileDiffB++;
+                if (isComputersTurn())
+                    tileDiff = tileDiffB - tileDiffW;
+                else
+                    tileDiff = tileDiffW - tileDiffB;
+
+                //evaluate maximize mobility component
+                turn++;
+                mobilityB = calculatePossibleMoves();
+                turn--;
+                mobilityW = calculatePossibleMoves();
+                mobilityDiff = mobilityW - mobilityB;
+
+                //calculate coefficients for tileDiff and mobilityDiff
+                if (turn < 50)
+                    coeffMaxTile = 1;
+                else
+                    coeffMaxTile = 10;
+                if (turn < 50)
+                    coeffMaxMobility = 1 * turn;
+                else
+                    coeffMaxMobility = 50;
+                utilVal = coeffSquareWeight * sWeight + coeffMaxTile * tileDiff + coeffMaxMobility * mobilityDiff;
+                //utilVal = sWeight;//coeffSquareWeight * sWeight + coeffMaxTile * tileDiff + coeffMaxMobility * mobilityDiff;
+                utilValValid = true;
+            }
+            return utilVal;
         }
         public static int nodeCounter = 0;
         public static int maxNumChildren = 64;
-        public static GameState ConstructGameTree(GameState rootState)
+        public void ConstructGameTree()
         {
-            ConstructGameTreeRecursive(rootState, 0);
-            return rootState;
+            ConstructGameTreeRecursive(this, 0);
         }
         public static void ConstructGameTreeRecursive(GameState node, int currDepth)
         {
             int temp = 0;
+            //temp = node.getUtilVal();
             if (currDepth >= maxDepth)
                 return;
             int[] c;
@@ -156,11 +346,13 @@ namespace ai_proj_cs
                 if (next[i].makeMove(c[0], c[1]) == -1)
                     temp = 1;
                 next[i].nextMove();
-                next[i].name = Convert.ToString(GameState.nodeCounter++);
-                ConstructGameTreeRecursive(next[i], currDepth + 1);
                 node.addChild(next[i]);
+                next[i].dumpData(currDepth + 1);
             }
+            for (int i = 0; i < possibleMoveInd.Length; i++)
+                ConstructGameTreeRecursive(next[i], currDepth + 1);
         }
+        
         public GameState cloneTurnAndData()
         {
             GameState y = new GameState();
@@ -179,13 +371,14 @@ namespace ai_proj_cs
                     data[i, j].val = data_[i, j].val;
         }
         public static bool randomStrategy = false;
-        public static int maxDepth = 3;
+        public static int maxDepth = 5;
         public void addChild(GameState node_)
         {
             node_.parent = this;
             children[numChildren] = node_;
             numChildren++;
         }
+        public static bool logger = true;
         public static int[] ind2sub(int m)
         {
             int[] i = new int[2];
@@ -263,6 +456,7 @@ namespace ai_proj_cs
             data[3, 4].setBlack();
             data[4, 3].setBlack();
             this.children = new GameState[maxNumChildren];
+            this.name = Convert.ToString(GameState.nodeCounter++);
         }
         public Piece[,] data;
         public int turn = 0;
@@ -333,10 +527,11 @@ namespace ai_proj_cs
             else
                 data[i, j].setBlack();
         }
-        public void calculatePossibleMoves()
+        public int calculatePossibleMoves()
         {
             int ci = -1;
             int cj = -1;
+            int n = 0;
             for (int i = 0; i < puzzleSize; i++)
             {
                 for (int j = 0; j < puzzleSize; j++)
@@ -374,13 +569,17 @@ namespace ai_proj_cs
                                 else
                                 {
                                     if (checkCellCurr(ci, cj))
+                                    {
                                         data[i, j].setPossible();
+                                        n++;
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+            return n;
         }
         public int makeMove(int x, int y)
         {
