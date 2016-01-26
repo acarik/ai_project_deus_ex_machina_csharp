@@ -1,0 +1,187 @@
+<Project>
+  <Name>Untitled</Name>
+  <ProjectItem type="NClass.DiagramEditor.ClassDiagram.Diagram" assembly="NClass.DiagramEditor, Version=2.4.1823.0, Culture=neutral, PublicKeyToken=null">
+    <Name>Untitled</Name>
+    <Language>CSharp</Language>
+    <Entities />
+    <Relationships />
+  </ProjectItem>
+  <ProjectItem type="NClass.DiagramEditor.ClassDiagram.Diagram" assembly="NClass.DiagramEditor, Version=2.4.1823.0, Culture=neutral, PublicKeyToken=null">
+    <Name>ai_proj_cs.exe</Name>
+    <Language>CSharp</Language>
+    <Entities>
+      <Entity type="Class">
+        <Name>Form1</Name>
+        <Access>Public</Access>
+        <Location left="629" top="690" />
+        <Size width="162" height="315" />
+        <Collapsed>False</Collapsed>
+        <Member type="Field">public GameState currentState</Member>
+        <Member type="Field">public Int32 nodeCounter</Member>
+        <Member type="Field">public PictureBox[,] gridTextBoxes</Member>
+        <Member type="Field">private IContainer components</Member>
+        <Member type="Field">private Label label1</Member>
+        <Member type="Field">private Label label2</Member>
+        <Member type="Field">private Label label3</Member>
+        <Member type="Field">private Label label4</Member>
+        <Member type="Constructor">public Form1()</Member>
+        <Member type="Method">public Void Form1_Load(Object sender, EventArgs e)</Member>
+        <Member type="Method">public Int32[] updateBoard(Int32 childrenCount)</Member>
+        <Member type="Method">private Void button_Click(Object sender, EventArgs e)</Member>
+        <Member type="Method">protected virtual Void Dispose(Boolean disposing)</Member>
+        <Member type="Method">private Void InitializeComponent()</Member>
+        <Modifier>None</Modifier>
+      </Entity>
+      <Entity type="Class">
+        <Name>GameState</Name>
+        <Access>Public</Access>
+        <Location left="436" top="35" />
+        <Size width="162" height="978" />
+        <Collapsed>False</Collapsed>
+        <Member type="Field">public Boolean gameEnded</Member>
+        <Member type="Field">public Int32 noValidMoveCount</Member>
+        <Member type="Field">public Int32 val</Member>
+        <Member type="Field">public Boolean utilValValid</Member>
+        <Member type="Field">public Int32 utilVal</Member>
+        <Member type="Field">public Int32 numChildren</Member>
+        <Member type="Field">public String name</Member>
+        <Member type="Field">public GameState parent</Member>
+        <Member type="Field">public GameState[] children</Member>
+        <Member type="Field">public Piece[,] data</Member>
+        <Member type="Field">public Int32 turn</Member>
+        <Member type="Field">public static Int32[,] squareWeight</Member>
+        <Member type="Field">public static Hashtable calculatedStates</Member>
+        <Member type="Field">public static Int32[] elapsedTime</Member>
+        <Member type="Field">public static Int32 nodeCounter</Member>
+        <Member type="Field">public static Int32 maxNumChildren</Member>
+        <Member type="Field">public static Int32 Inf</Member>
+        <Member type="Field">public static Boolean randomStrategy</Member>
+        <Member type="Field">public static Int32 maxDepth</Member>
+        <Member type="Field">public static Boolean useHashTable</Member>
+        <Member type="Field">public static Boolean useAlphaBetaPr</Member>
+        <Member type="Field">public static Boolean logger</Member>
+        <Member type="Field">public static Boolean logger2</Member>
+        <Member type="Field">public static Int32 puzzleSize</Member>
+        <Member type="Constructor">public GameState(GameState currGs, GameState parent_)</Member>
+        <Member type="Constructor">public GameState(Piece[,] data_)</Member>
+        <Member type="Constructor">public GameState()</Member>
+        <Member type="Constructor">static GameState()</Member>
+        <Member type="Method">public Int32 getChildNumRecursive()</Member>
+        <Member type="Method">public Void dumpData(Int32 currDepth)</Member>
+        <Member type="Method">public Int32 getVal()</Member>
+        <Member type="Method">public String getStateString()</Member>
+        <Member type="Method">public Int32 getUtilVal()</Member>
+        <Member type="Method">public Int32[] ConstructGameTree()</Member>
+        <Member type="Method">public static Void ConstructGameTreeRecursive(GameState node, Int32 currDepth)</Member>
+        <Member type="Method">public GameState cloneTurnAndData()</Member>
+        <Member type="Method">public Void setData(Piece[,] data_)</Member>
+        <Member type="Method">public Void addChild(GameState node_)</Member>
+        <Member type="Method">public static Int32[] ind2sub(Int32 m)</Member>
+        <Member type="Method">public static Int32 sub2ind(Int32 i, Int32 j)</Member>
+        <Member type="Method">public Int32[] getPossibleMoves()</Member>
+        <Member type="Method">public Int32[,] getData()</Member>
+        <Member type="Method">public String[] getDataStr()</Member>
+        <Member type="Method">public Boolean isUsersTurn()</Member>
+        <Member type="Method">public Boolean isComputersTurn()</Member>
+        <Member type="Method">public Void nextMove()</Member>
+        <Member type="Method">public Boolean isPotentialCell(Int32 x, Int32 y)</Member>
+        <Member type="Method">public Boolean checkInd(Int32 i, Int32 j)</Member>
+        <Member type="Method">public Boolean checkCellCurr(Int32 i, Int32 j)</Member>
+        <Member type="Method">public Boolean checkCellOppn(Int32 i, Int32 j)</Member>
+        <Member type="Method">public Void setCellCurr(Int32 i, Int32 j)</Member>
+        <Member type="Method">public Int32 calculatePossibleMoves()</Member>
+        <Member type="Method">public Int32 makeMove(Int32 x, Int32 y)</Member>
+        <Modifier>None</Modifier>
+      </Entity>
+      <Entity type="Class">
+        <Name>Piece</Name>
+        <Access>Public</Access>
+        <Location left="223" top="347" />
+        <Size width="162" height="383" />
+        <Collapsed>False</Collapsed>
+        <Member type="Field">public Int32 val</Member>
+        <Member type="Field">public static Int32 white</Member>
+        <Member type="Field">public static Int32 black</Member>
+        <Member type="Field">public static Int32 empty</Member>
+        <Member type="Field">public static Int32 possible</Member>
+        <Member type="Constructor">public Piece(Int32 val_)</Member>
+        <Member type="Constructor">public Piece()</Member>
+        <Member type="Constructor">static Piece()</Member>
+        <Member type="Method">public Void setBlack()</Member>
+        <Member type="Method">public Void setWhite()</Member>
+        <Member type="Method">public Void setPossible()</Member>
+        <Member type="Method">public Void setEmpty()</Member>
+        <Member type="Method">public Boolean isBlack()</Member>
+        <Member type="Method">public Boolean isWhite()</Member>
+        <Member type="Method">public Boolean isEmpty()</Member>
+        <Member type="Method">public Boolean isPossible()</Member>
+        <Member type="Method">public Boolean isOccupied()</Member>
+        <Member type="Method">public Color getColor()</Member>
+        <Modifier>None</Modifier>
+      </Entity>
+      <Entity type="Class">
+        <Name>Program</Name>
+        <Access>Internal</Access>
+        <Location left="223" top="35" />
+        <Size width="162" height="216" />
+        <Collapsed>False</Collapsed>
+        <Member type="Method">private static Void Main()</Member>
+        <Modifier>Static</Modifier>
+      </Entity>
+    </Entities>
+    <Relationships>
+      <Relationship type="Association" first="0" second="1">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Vertical</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+        <StartRole>currentState</StartRole>
+        <EndMultiplicity>1</EndMultiplicity>
+      </Relationship>
+      <Relationship type="Association" first="1" second="1">
+        <Label>
+        </Label>
+        <StartOrientation>Horizontal</StartOrientation>
+        <EndOrientation>Vertical</EndOrientation>
+        <BendPoint relativeToStartShape="True">
+          <X>359</X>
+          <Y>802</Y>
+        </BendPoint>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+        <StartRole>parent</StartRole>
+        <EndMultiplicity>1</EndMultiplicity>
+      </Relationship>
+      <Relationship type="Association" first="1" second="1">
+        <Label>
+        </Label>
+        <StartOrientation>Horizontal</StartOrientation>
+        <EndOrientation>Vertical</EndOrientation>
+        <BendPoint relativeToStartShape="True">
+          <X>386</X>
+          <Y>833</Y>
+        </BendPoint>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+        <StartRole>children</StartRole>
+        <EndMultiplicity>*</EndMultiplicity>
+      </Relationship>
+      <Relationship type="Association" first="1" second="2">
+        <Label>
+        </Label>
+        <StartOrientation>Horizontal</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <BendPoint relativeToStartShape="True">
+          <X>411</X>
+          <Y>365</Y>
+        </BendPoint>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+        <StartRole>data</StartRole>
+        <EndMultiplicity>1</EndMultiplicity>
+      </Relationship>
+    </Relationships>
+  </ProjectItem>
+</Project>

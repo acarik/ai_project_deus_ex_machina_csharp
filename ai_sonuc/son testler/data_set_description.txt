@@ -1,0 +1,14 @@
+kolay gelsin
+
+klavye ingilizce, hatirlatirim.
+
+oki doki!!
+
+ilk set alpha beta false, hashing false 3 kez kazandim.
+ikinci set alpha beta false hashing true 4 kez kazandim.
+ucuncu set alpha beta true hashing false 1 kere pata bitti 3 kere kazandim.
+dorduncu set alpha beta true hashing true 1 kere yendim.
+
+
+		End of the looong story. . .
+		Görkem out =)(=
