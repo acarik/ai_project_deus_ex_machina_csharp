@@ -6,3 +6,11 @@ C:\Documents and Settings\Ali\My Documents\Visual Studio 2008\Projects\ai_proj_c
 C:\Documents and Settings\Ali\My Documents\Visual Studio 2008\Projects\ai_proj_cs\ai_proj_cs\bin\Debug\ai_proj_cs.pdb
 C:\Documents and Settings\Ali\My Documents\Visual Studio 2008\Projects\ai_proj_cs\ai_proj_cs\obj\Debug\ai_proj_cs.exe
 C:\Documents and Settings\Ali\My Documents\Visual Studio 2008\Projects\ai_proj_cs\ai_proj_cs\obj\Debug\ai_proj_cs.pdb
+C:\Documents and Settings\Ali Can ARIK\My Documents\Visual Studio 2008\Projects\ai_proj_cs\ai_proj_cs\obj\Debug\ai_proj_cs.exe
+C:\Documents and Settings\Ali Can ARIK\My Documents\Visual Studio 2008\Projects\ai_proj_cs\ai_proj_cs\obj\Debug\ai_proj_cs.pdb
+C:\Documents and Settings\Ali Can ARIK\My Documents\Visual Studio 2008\Projects\ai_proj_cs\ai_proj_cs\bin\Debug\ai_proj_cs.exe
+C:\Documents and Settings\Ali Can ARIK\My Documents\Visual Studio 2008\Projects\ai_proj_cs\ai_proj_cs\bin\Debug\ai_proj_cs.pdb
+C:\Documents and Settings\Ali Can ARIK\My Documents\Visual Studio 2008\Projects\ai_proj_cs\ai_proj_cs\obj\Debug\ResolveAssemblyReference.cache
+C:\Documents and Settings\Ali Can ARIK\My Documents\Visual Studio 2008\Projects\ai_proj_cs\ai_proj_cs\obj\Debug\ai_proj_cs.Form1.resources
+C:\Documents and Settings\Ali Can ARIK\My Documents\Visual Studio 2008\Projects\ai_proj_cs\ai_proj_cs\obj\Debug\ai_proj_cs.Properties.Resources.resources
+C:\Documents and Settings\Ali Can ARIK\My Documents\Visual Studio 2008\Projects\ai_proj_cs\ai_proj_cs\obj\Debug\ai_proj_cs.csproj.GenerateResource.Cache

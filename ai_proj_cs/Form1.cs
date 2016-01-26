@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Collections;
 
 namespace ai_proj_cs
 {
@@ -28,7 +29,7 @@ namespace ai_proj_cs
 
         public void Form1_Load(object sender, EventArgs e)
         {
-            if (GameState.logger)
+            if (GameState.logger || GameState.logger2)
                 if (System.IO.File.Exists(@"D:\data.txt"))
                     System.IO.File.Delete(@"D:\data.txt");
             // and construct the grid
@@ -66,29 +67,119 @@ namespace ai_proj_cs
                 y += dsy;
                 x = x0;
             };
-
-            this.updateBoard();
+            label1.Text = "";
+            label2.Text = "";
+            label3.Text = "";
+            label4.Text = "";
+            this.updateBoard(0);
         }
 
-        public void updateBoard()
+        public int[] updateBoard(int childrenCount)
         {
+            int[] bwCount = new int[2];
+            int whiteCount = 0;
+            int blackCount = 0;
             currentState.calculatePossibleMoves();
             int[,] retdata = currentState.getData();
             for (int i = 0; i < GameState.puzzleSize; i++)
                 for (int j = 0; j < GameState.puzzleSize; j++)
+                {
                     gridTextBoxes[i, j].BackColor = currentState.data[i, j].getColor();
+                    if (currentState.data[i, j].isWhite())
+                        whiteCount++;
+                    if (currentState.data[i, j].isBlack())
+                        blackCount++;
+                }
+            // average elapsed time per turn
+            int count = 0;
+            int sum = 0;
+            for (int i = 1; i < GameState.puzzleSize * GameState.puzzleSize; i = i + 2)
+            {
+                if (GameState.elapsedTime[i] == 0)
+                    break;
+                sum += GameState.elapsedTime[i];
+                count++;
+            }
+            int averageElapsedTime;
+            if (count == 0)
+                averageElapsedTime = 0;
+            else
+                averageElapsedTime = sum / count;
+            if (currentState.isComputersTurn())
+            {
+                label3.Text = "";
+                label4.Text = "";
+            }
+            else
+            {
+                label3.Text = "Avg. comp. calculation time per turn: " + Convert.ToString(averageElapsedTime) + " ms.";
+                label4.Text = "Nodes expanded in last turn: " + Convert.ToString(childrenCount);
+                if (GameState.logger2)
+                    if (currentState.turn > 1)
+                    {
+                        {
+                            using (System.IO.StreamWriter file =
+                                new System.IO.StreamWriter(@"D:\data.txt", true))
+                            {
+                                file.WriteLine(Convert.ToString(GameState.elapsedTime[currentState.turn - 1]) + " " + Convert.ToString(childrenCount));
+                            }
+                        }
+                    }
+                /*
+                 * if (GameState.logger)
+            {
+                string[] lines = new string[puzzleSize];
+                string s;
+                if (isComputersTurn())
+                    s = "comp/white/" + Convert.ToString(Piece.white) + " moves";
+                else
+                    s = "user/black/" + Convert.ToString(Piece.black) + " moves";
+                for (int i = 0; i < puzzleSize; i++)
+                {
+                    for (int j = 0; j < puzzleSize; j++)
+                        if (data[i, j].isOccupied())
+                            lines[i] += Convert.ToString(data[i, j].val);
+                        else
+                            lines[i] += "0";
+                }
+                using (System.IO.StreamWriter file =
+                new System.IO.StreamWriter(@"D:\data.txt", true))
+                {
+                    if (this.parent == null)
+                        file.WriteLine("curr:" + this.name + " at depth " + Convert.ToString(currDepth) + ", " + s + ", parent:" + "null" + ", util:" + Convert.ToString(this.getUtilVal()));
+                    else
+                        file.WriteLine("curr:" + this.name + " at depth " + Convert.ToString(currDepth) + ", " + s + ", parent:" + this.parent.name + ", util:" + Convert.ToString(this.getUtilVal()));
+                    for (int i = 0; i < puzzleSize; i++)
+                    {
+                        file.WriteLine(lines[i]);
+                    }
+                }
+                 */
+            }
+
+            if (currentState.isComputersTurn())
+                label1.Text = "Computer/White's turn";
+            else
+                label1.Text = "User/Black's turn";
+
+            label2.Text = "Black: " + Convert.ToString(blackCount) + ", White: " + Convert.ToString(whiteCount);
+            bwCount[0] = blackCount;
+            bwCount[1] = whiteCount;
+            return bwCount;
         }
 
         private void button_Click(object sender, EventArgs e)
         {
+            if (currentState.gameEnded)
+                return;
+            int totalChildrenNum = 0;
             Random rnd = new Random();
             int ci = -1;
             int cj = -1;
             int[] c = {-1, -1};
-            int temp;
             //int[,] retdata;
             string[] retstring1;
-            string[] retstring2;
+            //string[] retstring2;
             retstring1 = currentState.getDataStr();
             if (currentState.isUsersTurn())
             {
@@ -99,6 +190,13 @@ namespace ai_proj_cs
                 string[] words = clickedName.Split(delimiterChars);
                 ci = Convert.ToInt16(words[0]);
                 cj = Convert.ToInt16(words[1]);
+                // check to see if no valid moves
+                int n = currentState.calculatePossibleMoves();
+                if (n == 0)
+                {
+                    ci = -2;
+                    cj = -2;
+                }
             }
             else
             {
@@ -113,28 +211,75 @@ namespace ai_proj_cs
                     }
                 else
                 {
+                    var watch = System.Diagnostics.Stopwatch.StartNew(); 
                     // contruct game tree
                     currentState.dumpData(0);
-                    currentState.ConstructGameTree();
-                    c = currentState.findBestMove();
+                    c = currentState.ConstructGameTree();
+                    watch.Stop();
+                    var elapsedMs = watch.ElapsedMilliseconds;
+                    GameState.elapsedTime[currentState.turn] = Convert.ToInt32(elapsedMs);
+                    //c = currentState.findBestMove();
                     ci = c[0];
                     cj = c[1];
+                    totalChildrenNum = currentState.getChildNumRecursive();
                     currentState.numChildren = 0;
                 }
 
             }
-            if (currentState.makeMove(ci, cj) == -1)
-                return;
+            // check if all cells are occupied
+            bool boardFullFlag = true;
+            for (int i = 0; i < GameState.puzzleSize; i++)
+                for (int j = 0; j < GameState.puzzleSize; j++)
+                    if (!((ci == i) && (cj == j)))
+                        if (!currentState.data[i, j].isOccupied())
+                            boardFullFlag = false;
+            if ((boardFullFlag) || ((ci == -2) && (cj == -2)))
+            {
+                currentState.makeMove(ci, cj);
+                currentState.noValidMoveCount++;
+                if (currentState.noValidMoveCount == 2)
+                {
+                    // finish the game
+                    currentState.gameEnded = true;
+                    int[] bwCount = this.updateBoard(0);
+                    if (bwCount[0] == bwCount[1])
+                        label1.Text = "Draw!";
+                    else
+                    {
+                        if (bwCount[0] > bwCount[1])
+                            label1.Text = "User/Black wins!";
+                        else
+                            label1.Text = "Computer/White wins!";
+                    }
+                    return;
+                }
+            }
+            else
+            {
+                if (currentState.makeMove(ci, cj) == -1)
+                    return;
+            };
             // update turn number
             currentState.nextMove();
-            this.updateBoard();
-            retstring2 = currentState.getDataStr();
-            temp = 0;
+            int[] dummy = this.updateBoard(totalChildrenNum);
+//            retstring2 = currentState.getDataStr();
         }
+
     }
 
     public class GameState
     {
+        public int getChildNumRecursive()
+        {
+            int c = 0;
+            if (this.numChildren == 0)
+                return 1;
+            for (int i = 0; i < this.numChildren; i++)
+                c += this.children[i].getChildNumRecursive();
+            return c;
+        }
+        public bool gameEnded = false;
+        public int noValidMoveCount = 0;
         public void dumpData(int currDepth)
         {
             if (GameState.logger)
@@ -167,45 +312,23 @@ namespace ai_proj_cs
                 }
             }
         }
-        public void dumpTree()
+        /*public int[] findBestMove()
         {
-            if (GameState.logger)
+            int[] s = new int[]{-1,-1};
+            if (this.numChildren == 0)
             {
-                this.dumpTreeRecursive();
+                // then no possible move.
+                s[0] = -2;
+                s[1] = -2;
+                return s;
             }
-        }
-        public void dumpTreeRecursive()
-        {
-            GameState curr = this;
-            GameState r;
-            string s;
-            string s1;
-            for (int i = 0; i < 250; i++)
-            {
-                s = "";
-                if (curr == null)
-                    break;
-                for (int j = 0; j < curr.numChildren; j++)
-                {
-                    r = curr.children[j];
-                    if (r.isComputersTurn())
-                        s1 = "M";
-                    else
-                        s1 = "m";
-                    s += "(" + r + r.name + ",";
-                }
-            }
-        }
-        public int[] findBestMove()
-        {
-            int[] s = new int[]{0,0};
-            int ind = -1;
-            int maxVal = -5000;
-            for (int i = 0; i<this.numChildren; i++)
-                if (this.children[i].getUtilVal() > maxVal)
+            int ind = 0;
+            int maxVal = this.children[0].getVal();
+            for (int i = 1; i<this.numChildren; i++)
+                if (this.children[i].getVal() > maxVal)
                 {
                     ind = i;
-                    maxVal = this.children[i].getUtilVal();
+                    maxVal = this.children[i].getVal();
                 }
             // ind sirali cocuga gelmek icin ypailmasi gereken hamleyi bul
             for(int i=0;i<puzzleSize;i++)
@@ -218,14 +341,19 @@ namespace ai_proj_cs
                         }
             return s;
         }
+         * */
         public int getVal()
         {
+            if (this.numChildren == 0)
+                this.val = this.getUtilVal();
+            return val;
+            /*
             int retVal;
             if (this.numChildren == 0)
                 retVal = this.getUtilVal();
             else
             {
-                retVal = this.children[0].getUtilVal();
+                retVal = this.children[0].getVal();
                 for (int i = 1; i < this.numChildren; i++)
                     if (this.isComputersTurn())
                     {
@@ -241,32 +369,64 @@ namespace ai_proj_cs
                     }
             }
             return retVal;
+             */
         }
+        public int val = Inf;
+        /*
+        public static int[,] squareWeight = {{100,-25,10,5,5,10,-25,100},
+											 {25,25,2,2,2,2,25,25},
+											 {10,2,5,1,1,5,2,10},
+											 {5,2,1,2,2,1,2,5},
+											 {5,2,1,2,2,1,2,5},
+											 {10,2,5,1,1,5,2,10},
+											 {25,25,2,2,2,2,25,25},
+											 {100,-25,10,5,5,10,-25,100},};
+         */
         
         public static int[,] squareWeight = {{100,-25,10,5,5,10,-25,100},
-											 {25 ,25 ,2 ,2,2,2 ,25 ,25},
+											 {-25 ,-25 ,2 ,2,2,2 ,-25 ,-25},
 											 {10 ,2  ,5 ,1,1,5 ,2  ,10},
 											 {5  ,2  ,1 ,2,2,1 ,2  ,5},
 											 {5  ,2  ,1 ,2,2,1 ,2  ,5},
 											 {10 ,2  ,5 ,1,1,5 ,2  ,10},
-											 {25 ,25 ,2 ,2,2,2 ,25 ,25},
+											 {-25 ,-25 ,2 ,2,2,2 ,-25 ,-25},
 											 {100,-25,10,5,5,10,-25,100},};
-        /*
-        public static int[,] squareWeight = {{100,25,10,5,5,10, 25,100},
-											 {25 ,25 ,2 ,2,2,2 ,25 ,25},
-											 {10 ,2  ,5 ,1,1,5 ,2  ,10},
-											 {5  ,2  ,1 ,2,2,1 ,2  ,5},
-											 {5  ,2  ,1 ,2,2,1 ,2  ,5},
-											 {10 ,2  ,5 ,1,1,5 ,2  ,10},
-											 {25 ,25 ,2 ,2,2,2 ,25 ,25},
-											 {100,25,10,5,5,10 ,25 ,100},};
-        */
         public bool utilValValid = false;
         public int utilVal = 0;
+        public string getStateString()
+        {
+            string stateString = null;
+            for (int i = 0; i < puzzleSize; i++)
+                for (int j = 0; j < puzzleSize; j++)
+                    if (this.data[i, j].isOccupied())
+                        stateString += Convert.ToChar(data[i, j].val);
+                    else
+                        stateString += Convert.ToChar(Piece.empty);
+            return stateString;
+        }
+        public static Hashtable calculatedStates = new Hashtable();
+        public static int[] elapsedTime = new int[64];
         public int getUtilVal()
         {
+            string stateString = "";
             if (!utilValValid)
             {
+                if (GameState.useHashTable)
+                {
+                    // first check if hashtable contains this state or not
+                    // first create 'key' string for given state
+                    stateString = this.getStateString();
+                    //if given state is in the hashtable return its value 
+                    if (GameState.calculatedStates.ContainsKey(stateString))
+                    {
+                        utilVal = Int32.Parse(calculatedStates[stateString].ToString());
+                        utilValValid = true;
+                        return utilVal;
+                    }
+                }
+                // if it is not in the hashtable calculate utility value
+
+
                 int sWeight = 0;
                 int tileDiff = 0, tileDiffW = 0, tileDiffB = 0;
                 int mobilityDiff = 0, mobilityW = 0, mobilityB = 0;
@@ -290,69 +450,183 @@ namespace ai_proj_cs
                 //evaluate maximize tiles component
                 for (int i = 0; i < puzzleSize; i++)
                     for (int j = 0; j < puzzleSize; j++)
-                        if (data[i, j].isWhite())
-                            tileDiffW++;
-                        else
-                            tileDiffB++;
+                        if (data[i, j].isOccupied())
+                        {
+                            if (data[i, j].isWhite())
+                                tileDiffW++;
+                            else
+                                tileDiffB++;
+                        };
                 if (isComputersTurn())
-                    tileDiff = tileDiffB - tileDiffW;
-                else
                     tileDiff = tileDiffW - tileDiffB;
+                else
+                    tileDiff = tileDiffB - tileDiffW;
 
                 //evaluate maximize mobility component
-                turn++;
-                mobilityB = calculatePossibleMoves();
-                turn--;
-                mobilityW = calculatePossibleMoves();
-                mobilityDiff = mobilityW - mobilityB;
+                this.turn++;
+                mobilityB = this.calculatePossibleMoves();
+                this.turn--;
+                mobilityW = this.calculatePossibleMoves();
+                if (isComputersTurn())
+                    mobilityDiff = mobilityW - mobilityB;
+                else
+                    mobilityDiff = mobilityB - mobilityW;
 
                 //calculate coefficients for tileDiff and mobilityDiff
-                if (turn < 50)
+                if (turn < 10)
                     coeffMaxTile = 1;
                 else
-                    coeffMaxTile = 10;
-                if (turn < 50)
+                    coeffMaxTile = 40;
+                if (turn < 20)
                     coeffMaxMobility = 1 * turn;
                 else
                     coeffMaxMobility = 50;
                 utilVal = coeffSquareWeight * sWeight + coeffMaxTile * tileDiff + coeffMaxMobility * mobilityDiff;
-                //utilVal = sWeight;//coeffSquareWeight * sWeight + coeffMaxTile * tileDiff + coeffMaxMobility * mobilityDiff;
+
                 utilValValid = true;
+
+                if (GameState.useHashTable)
+                    GameState.calculatedStates.Add(stateString, utilVal);
             }
             return utilVal;
         }
         public static int nodeCounter = 0;
         public static int maxNumChildren = 64;
-        public void ConstructGameTree()
+        public int[] ConstructGameTree()
         {
+            int[] s = new int[2];
             ConstructGameTreeRecursive(this, 0);
+            if (this.numChildren == 0)
+            {
+                s[0] = -2;
+                s[1] = -2;
+                return s;
+            }
+            int max = this.children[0].getVal();
+            int ind = 0;
+            for (int i = 1; i < this.numChildren; i++)
+                if (this.children[i].getVal() > max)
+                {
+                    max = this.children[i].getVal();
+                    ind = i;
+                }
+            for (int i = 0; i<puzzleSize;i++)
+                for (int j=0;j<puzzleSize;j++)
+                    if (this.children[ind].data[i,j].isOccupied())
+                        if (!this.data[i, j].isOccupied())
+                        {
+                            s[0] = i;
+                            s[1] = j;
+                        }
+            return s;
         }
+        public static int Inf = 10000000;
         public static void ConstructGameTreeRecursive(GameState node, int currDepth)
         {
-            int temp = 0;
+            int j;
+            int temp;
+            bool breakFlag = false;
+            int[] s = new int[] { -1, -1 };
             //temp = node.getUtilVal();
             if (currDepth >= maxDepth)
+            {
+                node.getVal();
                 return;
-            int[] c;
+            }
             int[] possibleMoveInd;
             //GameState next = new GameState();
             //GameState next = (GameState)node.MemberwiseClone();
             possibleMoveInd = node.getPossibleMoves();
             GameState[] next = new GameState[possibleMoveInd.Length];
+            GameState grandParent = node.parent;
             for (int i = 0; i < possibleMoveInd.Length; i++)
             {
                 next[i] = node.cloneTurnAndData();
-                c = ind2sub(possibleMoveInd[i]);
-                if (next[i].makeMove(c[0], c[1]) == -1)
-                    temp = 1;
+                s = ind2sub(possibleMoveInd[i]);
+                if (next[i].makeMove(s[0], s[1]) == -1)
+                    return;
                 next[i].nextMove();
                 node.addChild(next[i]);
-                next[i].dumpData(currDepth + 1);
-            }
-            for (int i = 0; i < possibleMoveInd.Length; i++)
                 ConstructGameTreeRecursive(next[i], currDepth + 1);
+                next[i].dumpData(currDepth + 1);
+                if (GameState.useAlphaBetaPr)
+                {
+                    // alpha-beta control
+                    if (node.isComputersTurn())
+                    {
+                        
+                        breakFlag = false;
+                        if (grandParent != null)
+                        {
+                            for (j = 0; j < grandParent.numChildren; j++)
+                                if (grandParent.children[j] == node)
+                                    break;
+                            for (int k = 0; k < j; k++)
+                            {
+                                if ((grandParent.children[k].val == Inf) || (grandParent.children[k].val == -Inf) || (next[i].val == Inf) || (next[i].val == -Inf))
+                                    break;
+                                if (grandParent.children[k].val < next[i].val)
+                                {
+                                    node.val = next[i].val;
+                                    // prune!
+                                    breakFlag = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (breakFlag)
+                            // daha fazla cocuk ekleme, cik
+                            break;
+                    }
+                    else
+                    {
+                        breakFlag = false;
+                        if (grandParent != null)
+                        {
+                            for (j = 0; j < grandParent.numChildren; j++)
+                                if (grandParent.children[j] == node)
+                                    break;
+                            for (int k = 0; k < j; k++)
+                            {
+                                if ((grandParent.children[k].val == Inf) || (grandParent.children[k].val == -Inf) || (next[i].val == Inf) || (next[i].val == -Inf))
+                                    break;
+                                if (grandParent.children[k].val > next[i].val)
+                                {
+                                    node.val = next[i].val;
+                                    // prune!
+                                    breakFlag = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (breakFlag)
+                            // daha fazla cocuk ekleme, cik
+                            break;
+                    }
+                }
+            }
+            // tum cocuklar eklendigine gore intervali guncelle
+            int max = -Inf;
+            int min = Inf;
+            int currVal;
+            GameState temp1 = node.parent;
+            if (temp1 == null)
+                temp = 1;
+            for (int i = 0; i < node.numChildren; i++)
+            {
+                currVal = node.children[i].getVal();
+                if (currVal > max)
+                    max = currVal;
+                if (currVal < min)
+                    min = currVal;
+            }
+            if (node.isComputersTurn())
+                // max node
+                node.val = max;
+            else
+                node.val = min;
         }
-        
+
         public GameState cloneTurnAndData()
         {
             GameState y = new GameState();
@@ -371,14 +645,17 @@ namespace ai_proj_cs
                     data[i, j].val = data_[i, j].val;
         }
         public static bool randomStrategy = false;
-        public static int maxDepth = 5;
+        public static int maxDepth = 4;
         public void addChild(GameState node_)
         {
             node_.parent = this;
             children[numChildren] = node_;
             numChildren++;
         }
-        public static bool logger = true;
+        public static bool useHashTable = false;
+        public static bool useAlphaBetaPr = true;
+        public static bool logger = false;
+        public static bool logger2 = false; // nodes ve sure bilgileri
         public static int[] ind2sub(int m)
         {
             int[] i = new int[2];
@@ -450,11 +727,21 @@ namespace ai_proj_cs
             data = new Piece[puzzleSize, puzzleSize];
             for (int i = 0; i < puzzleSize; i++)
                 for (int j = 0; j < puzzleSize; j++)
+                {
                     data[i, j] = new Piece();
+                    //data[i, j].setWhite();
+                };
             data[3, 3].setWhite();
             data[4, 4].setWhite();
             data[3, 4].setBlack();
             data[4, 3].setBlack();
+
+            /*
+            data[6, 6].setEmpty();
+            data[6, 7].setEmpty();
+            data[7, 7].setEmpty();
+             * */
+
             this.children = new GameState[maxNumChildren];
             this.name = Convert.ToString(GameState.nodeCounter++);
         }
@@ -635,6 +922,7 @@ namespace ai_proj_cs
                 for (int j = 0; j < puzzleSize; j++)
                     if (data[i, j].isPossible())
                         data[i, j].setEmpty();
+            this.noValidMoveCount = 0;
             return 0;
         }
     }
